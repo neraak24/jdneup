@@ -208,9 +208,69 @@
 </head>
 <body>
 
+<div id="hubGate" style="position:fixed;inset:0;background:linear-gradient(135deg,#f7f6f3,#eae7e2);display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'Inter',Arial,sans-serif;color:#1a1a1a;">
+  <div style="background:#fff;padding:40px 36px;border-radius:18px;box-shadow:0 15px 40px rgba(0,0,0,0.12);width:320px;text-align:center;">
+    <h1 id="hubGateTitulo" style="font-size:1.3rem;font-weight:600;margin-bottom:6px;">🔒 Verificando acesso</h1>
+    <p id="hubGateSubtitulo" style="font-size:0.85rem;color:#666;margin-bottom:8px;">Só um instante...</p>
+    <div id="hubGateSpinner" style="width:28px;height:28px;margin:18px auto 0;border:3px solid #ddd;border-top-color:#222;border-radius:50%;animation:hubGateSpin 0.8s linear infinite;"></div>
+    <div id="hubGateMsg" style="margin-top:14px;font-size:0.85rem;color:#c0392b;min-height:18px;"></div>
+  </div>
+</div>
+<style>@keyframes hubGateSpin { to { transform: rotate(360deg); } }</style>
+
+<script>
+const SUPABASE_URL = "https://bjzmlvsskhfrkvblvsjj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_YEHAM35S4jsY_dKoN5mwzg_YOVoVWJR";
+const SITE = "jdneup";
+let hubToken = null;
+let hubSessaoId = null;
+
+function hubMostrarErro(texto) {
+  document.getElementById('hubGateSpinner').style.display = 'none';
+  document.getElementById('hubGateTitulo').textContent = '🔒 Acesso restrito';
+  document.getElementById('hubGateSubtitulo').textContent = 'Não foi possível liberar a entrada.';
+  document.getElementById('hubGateMsg').textContent = texto;
+}
+
+function hubLiberarAcesso() {
+  document.getElementById('hubGate').style.display = 'none';
+  document.getElementById('landing').style.display = 'flex';
+}
+
+async function hubValidarToken(token) {
+  try {
+    const resp = await fetch(SUPABASE_URL + "/functions/v1/validar-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY },
+      body: JSON.stringify({ token, site: SITE })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      hubToken = token;
+      hubSessaoId = data.sessao_id;
+      hubLiberarAcesso();
+      return;
+    }
+    hubMostrarErro(data.motivo || "Link inválido ou expirado.");
+  } catch (e) {
+    hubMostrarErro("Erro ao verificar o link. Tente novamente.");
+  }
+}
+
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("t");
+  if (token) {
+    hubValidarToken(token);
+  } else {
+    hubMostrarErro("O acesso a este teste é feito apenas por um link individual, gerado pelo hub.");
+  }
+})();
+</script>
+
 <button id="exitBtn">Finalizar agora</button>
 
-<div id="landing">
+<div id="landing" style="display:none;">
   <div class="window-icon"></div>
   <h1>Janelas Digitais</h1>
   <p>Observe atentamente e responda quando for sua vez.</p>
@@ -384,6 +444,14 @@ function showResults() {
   text += `Total: ${totalCorrect} de ${results.length} sequências corretas.`;
   resultsEl.textContent = text;
   resultsEl.style.display = 'block';
+
+  if (hubToken) {
+    fetch(SUPABASE_URL + "/functions/v1/concluir-sessao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY },
+      body: JSON.stringify({ token: hubToken })
+    }).catch(() => {});
+  }
 }
 
 startBtn.addEventListener('click', async () => {
