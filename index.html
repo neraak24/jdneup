@@ -167,12 +167,12 @@
     border-color: #2a5f9e;
   }
   .square.correct {
-    background-color: #58b368;
-    border-color: #2e7d3d;
+    background-color: #333;
+    border-color: #000;
   }
   .square.wrong {
-    background-color: #d9534f;
-    border-color: #9e2a2a;
+    background-color: #333;
+    border-color: #000;
   }
   .square.disabled {
     cursor: default;
@@ -437,21 +437,9 @@ function buildSessionData() {
 }
 
 function showResults() {
-  statusEl.textContent = 'Teste concluído!';
   startBtn.style.display = 'none';
   finishBtn.style.display = 'none';
   exitBtn.style.display = 'none';
-  let text = 'Resumo dos resultados:\n\n';
-  let totalCorrect = 0;
-  results.forEach(r => {
-    text += `Sequência ${r.round} (tamanho ${r.length}): ${r.correct ? 'Correta' : 'Incorreta'}\n`;
-    text += `  Esperado: ${r.sequence.join(' - ')}\n`;
-    text += `  Respondido: ${r.userAnswer.join(' - ')}\n\n`;
-    if (r.correct) totalCorrect++;
-  });
-  text += `Total: ${totalCorrect} de ${results.length} sequências corretas.`;
-  resultsEl.textContent = text;
-  resultsEl.style.display = 'block';
 
   if (hubToken) {
     fetch(SUPABASE_URL + "/functions/v1/concluir-sessao", {
@@ -460,6 +448,8 @@ function showResults() {
       body: JSON.stringify({ token: hubToken, dados: buildSessionData() })
     }).catch(() => {});
   }
+
+  document.body.innerHTML = "<div style='min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:1.2rem;color:#333;text-align:center;padding:20px;background:#fff;'>Teste concluído. Obrigado!</div>";
 }
 
 startBtn.addEventListener('click', async () => {
