@@ -428,6 +428,14 @@ exitBtn.addEventListener('click', () => {
   showResults();
 });
 
+function buildSessionData() {
+  return {
+    test: 'janelas-digitais',
+    finishedAt: new Date().toISOString(),
+    results // cada rodada: { round, length, sequence, userAnswer, correct }
+  };
+}
+
 function showResults() {
   statusEl.textContent = 'Teste concluído!';
   startBtn.style.display = 'none';
@@ -449,7 +457,7 @@ function showResults() {
     fetch(SUPABASE_URL + "/functions/v1/concluir-sessao", {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY },
-      body: JSON.stringify({ token: hubToken })
+      body: JSON.stringify({ token: hubToken, dados: buildSessionData() })
     }).catch(() => {});
   }
 }
